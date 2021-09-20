@@ -6,7 +6,7 @@ const getSalt = (password: string) => {
     salt[i] = password.charCodeAt(i % (password.length - 1));
   }
 
-  return new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  return new Uint8Array(salt);
 };
 
 // Generate a consistent IV using username
@@ -17,7 +17,7 @@ const getIV = (username: string) => {
     iv[i] = username.charCodeAt(i % (username.length - 1));
   }
 
-  return new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  return new Uint8Array(iv);
 };
 
 function getPrivateInfoEncoding(privateInfo: string) {
