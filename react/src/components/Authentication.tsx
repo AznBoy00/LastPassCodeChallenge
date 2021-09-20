@@ -6,7 +6,6 @@ import { RootState } from '../reducers/rootReducer';
 interface StateProps {
   username: any;
   password: any;
-  authToken: string;
   privateInfo: string;
   errorMessage: string;
 }
@@ -53,7 +52,6 @@ const Authentication = (props: StateProps & DispatchProps): JSX.Element => {
 const mapStateToProps = (state: RootState): StateProps => ({
   username: '',
   password: '',
-  authToken: state.auth.authToken,
   privateInfo: state.auth.privateInfo,
   errorMessage: state.auth.errorMessage,
 });

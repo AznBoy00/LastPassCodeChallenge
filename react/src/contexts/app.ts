@@ -1,9 +1,10 @@
 import { call, put, takeLatest } from 'redux-saga/effects';
-import authenticateUser, { Response as authResponse } from '../api/auth';
+import authenticateUser from '../api/auth';
+import { decryptPrivateInfo, saveEncryptedPrivateInfo } from '../api/crypto';
 
 export interface STATE {
   username: string,
-  authToken: string,
+  password: string,
   privateInfo: string,
   errorMessage: string,
 }
@@ -11,7 +12,7 @@ export interface STATE {
 // initState
 const initState: STATE = {
   username: '',
-  authToken: '',
+  password: '',
   privateInfo: '',
   errorMessage: '',
 };
@@ -21,6 +22,8 @@ export const AUTHENTICATE = 'AUTHENTICATE';
 export const AUTHENTICATE_SUCCESS = 'AUTHENTICATE_SUCCESS';
 export const AUTHENTICATE_FAIL = 'AUTHENTICATE_FAIL';
 export const SAVE_PRIVATE_INFORMATION = 'SAVE_PRIVATE_INFORMATION';
+export const SAVE_PRIVATE_INFORMATION_SUCCESS = 'SAVE_PRIVATE_INFORMATION_SUCCESS';
+export const SAVE_PRIVATE_INFORMATION_FAIL = 'SAVE_PRIVATE_INFORMATION_FAIL';
 export const LOGOUT = 'LOGOUT';
 
 export interface AuthAction {
@@ -36,31 +39,15 @@ export const authenticate = (username: string, password: string): AuthAction => 
   password,
 });
 
-export interface SavePrivateInfoAction {
-  type: string;
-  authToken: string;
-  privateInfo: string;
-}
-
-export const savePrivateInfo = (authToken: string, privateInfo: string): SavePrivateInfoAction => ({
-  type: SAVE_PRIVATE_INFORMATION,
-  authToken,
-  privateInfo,
-});
-
 interface AuthSuccessAction {
   type: string;
   data: any;
-  username: string;
-  authToken: string;
 }
 
 // authentication success case
-export const authSuccess = (data: any, username: string, authToken: string): AuthSuccessAction => ({
+export const authSuccess = (data: any): AuthSuccessAction => ({
   type: AUTHENTICATE_SUCCESS,
   data,
-  username,
-  authToken,
 });
 
 interface AuthFailAction {
@@ -70,6 +57,39 @@ interface AuthFailAction {
 // authentication fail case
 export const authFail = (): AuthFailAction => ({
   type: AUTHENTICATE_FAIL,
+});
+
+// SAVE PRIVATE INFO
+export interface SavePrivateInfoAction {
+  type: string;
+  username: string;
+  password: string;
+  privateInfo: string;
+}
+
+export const savePrivateInfo = (username: string, password: string, privateInfo: string): SavePrivateInfoAction => ({
+  type: SAVE_PRIVATE_INFORMATION,
+  username,
+  password,
+  privateInfo,
+});
+
+interface SavePrivateInfoSuccessAction {
+  type: string;
+}
+
+// authentication success case
+export const savePrivateInfoSuccess = (): SavePrivateInfoSuccessAction => ({
+  type: SAVE_PRIVATE_INFORMATION_SUCCESS
+});
+
+interface SavePrivateInfoFailAction {
+  type: string;
+}
+
+// authentication fail case
+export const savePrivateInfoFail = (): SavePrivateInfoFailAction => ({
+  type: SAVE_PRIVATE_INFORMATION_FAIL,
 });
 
 export interface LogoutAction {
@@ -87,10 +107,9 @@ export const logout = (): LogoutAction => ({
 export function* handleAuthentication({ username, password }: AuthAction): Iterator<any> {
   try {
     const data = yield call(authenticateUser, username, password);
-    var pbkdf2 = require('pbkdf2');
-    const authToken = pbkdf2.pbkdf2Sync(password, 'salt', 1, 32, 'sha512');
+    
     if (data !== undefined) {
-      yield put(authSuccess(data, username, authToken));
+      yield put(authSuccess(data));
     }
   } catch (e) {
     yield put(authFail());
@@ -98,36 +117,42 @@ export function* handleAuthentication({ username, password }: AuthAction): Itera
   }
 }
 
+export function* handleSavePrivateInfo({ username, password, privateInfo }: SavePrivateInfoAction): Iterator<any> {
+  try {
+    const data = yield call(saveEncryptedPrivateInfo, username, password, privateInfo);
+
+    if (data !== undefined) {
+      yield put(savePrivateInfoSuccess());
+    }
+  } catch (e) {
+    yield put(savePrivateInfoFail());
+    throw e;
+  }
+}
+
 // saga action mapper
 export function* saga(): Iterator<any> {
   yield takeLatest(AUTHENTICATE, handleAuthentication);
+  yield takeLatest(SAVE_PRIVATE_INFORMATION, handleSavePrivateInfo);
 }
 
 // REDUCER
 export default function reducer(state: STATE = initState, action: any): STATE {
   switch (action.type) {
     case AUTHENTICATE_SUCCESS: {
-      const { data, username, authToken } = action;
-      const privateInfo = () => {
-        const localStoragePrivateInfo = localStorage.getItem('privateInfo');
-        if (localStoragePrivateInfo) {
-          return localStoragePrivateInfo;
-        } else {
-          return initState.privateInfo;
-        }
-      }
+      const { data } = action;
+
       if (data.success === true) {
         return {
-          ...state,
-          username: username,
-          authToken: authToken,
-          privateInfo: privateInfo(),
+          username: data.username,
+          password: data.password,
+          privateInfo: data.privateInfo,
+          errorMessage: '',
         };
       }
       return {
         ...state,
         username: initState.username,
-        authToken: initState.authToken,
         privateInfo: initState.privateInfo,
         errorMessage: 'Invalid Credentials',
       };
@@ -136,18 +161,20 @@ export default function reducer(state: STATE = initState, action: any): STATE {
       return {
         ...state,
         username: initState.username,
-        authToken: initState.authToken,
+        password: initState.password,
         privateInfo: initState.privateInfo,
         errorMessage: 'An unexpected error has occurred',
       };
     }
-    case SAVE_PRIVATE_INFORMATION: {
-      const { authToken, privateInfo } = action;
-      localStorage.setItem('privateInfo', privateInfo);
+    case SAVE_PRIVATE_INFORMATION_SUCCESS: {
       return {
         ...state,
-        authToken: authToken,
-        privateInfo: privateInfo,
+      }
+    }
+    case SAVE_PRIVATE_INFORMATION_FAIL: {
+      return {
+        ...state,
+        errorMessage: 'An unexpected error has occurred while saving private information',
       }
     }
     case LOGOUT: {

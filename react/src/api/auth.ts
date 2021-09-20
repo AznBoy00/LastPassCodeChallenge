@@ -1,3 +1,5 @@
+import { decryptPrivateInfo } from "./crypto";
+
 export interface Response {
   username: string;
   auth_token: string;
@@ -26,6 +28,15 @@ const authenticateUser = async (username: string, password: string): Promise<Res
 
   if (response.status === 200) {
     data.success = true;
+    data.username = username;
+    data.password = password;
+    
+    const encryptedPrivateInfo = localStorage.getItem('privateInfo');
+    if (encryptedPrivateInfo) {
+      data.privateInfo = await decryptPrivateInfo(username, password, encryptedPrivateInfo);
+    } else {
+      data.privateInfo = '';
+    }
   } else {
     data.success = false;
   }

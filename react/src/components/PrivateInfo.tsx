@@ -5,12 +5,12 @@ import { RootState } from '../reducers/rootReducer';
 
 interface StateProps {
   username: string;
-  authToken: string;
+  password: string;
   privateInfo: string;
 }
 
 interface DispatchProps {
-  savePrivateInfo: (authToken: string, privateInfo: string) => void;
+  savePrivateInfo: (username: string, password: string, privateInfo: string) => void;
   logout: () => void;
 }
 
@@ -18,13 +18,21 @@ const PrivateInfo = (props: StateProps & DispatchProps): JSX.Element => {
   // state
   const [state, setState] = React.useState(props);
   let { privateInfo = '' } = state;
+  
+  const savePrivateInfoChange = (): void => {
+    props.savePrivateInfo(props.username, props.password, privateInfo);
+  };
 
   const handlePrivateInfoChange = (e: any): void => {
     setState({ ...state, privateInfo: e.target.value });
+    // Auto Save
+    savePrivateInfoChange();
   };
 
-  const savePrivateInfoChange = (): void => {
-    props.savePrivateInfo(props.authToken, privateInfo);
+
+  const saveButtonClick = (): void => {
+    savePrivateInfoChange();
+    alert('Saved!');
   };
 
   const logout = (): void => {
@@ -34,11 +42,11 @@ const PrivateInfo = (props: StateProps & DispatchProps): JSX.Element => {
   return (
     <div className="private-info__wrapper">
       <div className="private-info__button-wrapper">
-        <label className="private-info__label" htmlFor="username">Private Information</label>
+        <label className="private-info__label" htmlFor="username">Hi { props.username }, here is your decoded private information</label>
       </div>
       <textarea id="privateInfo" className="private-info__textarea" name="privateInfo" value={state.privateInfo} onChange={handlePrivateInfoChange} />
       <div className="private-info__button-wrapper">
-        <button type="button" onClick={savePrivateInfoChange}>Save</button>
+        <button type="button" onClick={saveButtonClick}>Save</button>
         <button type="button" onClick={logout}>Logout</button>
       </div>
     </div>
@@ -47,7 +55,7 @@ const PrivateInfo = (props: StateProps & DispatchProps): JSX.Element => {
 
 const mapStateToProps = (state: RootState): StateProps => ({
   username: state.auth.username,
-  authToken: state.auth.authToken,
+  password: state.auth.password,
   privateInfo: state.auth.privateInfo,
 });
 
