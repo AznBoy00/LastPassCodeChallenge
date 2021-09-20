@@ -1,23 +1,9 @@
-import logo from './logo.svg';
+import { connect } from 'react-redux';
+import Auth from './components/Authentication';
 import './App.css';
 
-const App = (): JSX.Element => (
-  <div className="App">
-    <header className="App-header">
-      <img src={logo} className="App-logo" alt="logo" />
-      <p>
-        Edit <code>src/App.js</code> and save to reload.
-      </p>
-      <a
-        className="App-link"
-        href="https://reactjs.org"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Learn React
-      </a>
-    </header>
-  </div>
-);
+const App = (): JSX.Element => {
+  return <Auth />;
+};
 
-export default App;
+export default connect()(App);
