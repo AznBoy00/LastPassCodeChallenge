@@ -5,6 +5,7 @@ export interface STATE {
   username: string,
   authToken: string,
   privateInfo: string,
+  errorMessage: string,
 }
 
 // initState
@@ -12,6 +13,7 @@ const initState: STATE = {
   username: '',
   authToken: '',
   privateInfo: '',
+  errorMessage: '',
 };
 
 // actions
@@ -89,8 +91,6 @@ export function* handleAuthentication({ username, password }: AuthAction): Itera
     const authToken = pbkdf2.pbkdf2Sync(password, 'salt', 1, 32, 'sha512');
     if (data !== undefined) {
       yield put(authSuccess(data, username, authToken));
-    } else {
-      yield put(authFail());
     }
   } catch (e) {
     yield put(authFail());
@@ -108,11 +108,20 @@ export default function reducer(state: STATE = initState, action: any): STATE {
   switch (action.type) {
     case AUTHENTICATE_SUCCESS: {
       const { data, username, authToken } = action;
+      const privateInfo = () => {
+        const localStoragePrivateInfo = localStorage.getItem('privateInfo');
+        if (localStoragePrivateInfo) {
+          return localStoragePrivateInfo;
+        } else {
+          return initState.privateInfo;
+        }
+      }
       if (data.success === true) {
         return {
           ...state,
           username: username,
           authToken: authToken,
+          privateInfo: privateInfo(),
         };
       }
       return {
@@ -120,6 +129,7 @@ export default function reducer(state: STATE = initState, action: any): STATE {
         username: initState.username,
         authToken: initState.authToken,
         privateInfo: initState.privateInfo,
+        errorMessage: 'Invalid Credentials',
       };
     }
     case AUTHENTICATE_FAIL: {
@@ -128,10 +138,12 @@ export default function reducer(state: STATE = initState, action: any): STATE {
         username: initState.username,
         authToken: initState.authToken,
         privateInfo: initState.privateInfo,
+        errorMessage: 'An unexpected error has occurred',
       };
     }
     case SAVE_PRIVATE_INFORMATION: {
       const { authToken, privateInfo } = action;
+      localStorage.setItem('privateInfo', privateInfo);
       return {
         ...state,
         authToken: authToken,

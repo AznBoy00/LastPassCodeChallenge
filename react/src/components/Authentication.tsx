@@ -8,6 +8,7 @@ interface StateProps {
   password: any;
   authToken: string;
   privateInfo: string;
+  errorMessage: string;
 }
 
 interface DispatchProps {
@@ -34,6 +35,7 @@ const Authentication = (props: StateProps & DispatchProps): JSX.Element => {
 
  return (
   <form className="login-form" onSubmit={(e) => { handleSubmit(e); }}>
+     <span className="login-form__input-error">{props.errorMessage }</span>
     <div className="login-form__input-wrapper">
       <label className="login-form__input-label" htmlFor="username">Username</label>
         <input type="text" id="username" name="username" value={state.username} onChange={handleUsernameChange} autoComplete="username" />
@@ -53,6 +55,7 @@ const mapStateToProps = (state: RootState): StateProps => ({
   password: '',
   authToken: state.auth.authToken,
   privateInfo: state.auth.privateInfo,
+  errorMessage: state.auth.errorMessage,
 });
 
 const mapDispatchToProps: DispatchProps = {

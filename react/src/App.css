@@ -28,6 +28,11 @@
   color: #61dafb;
 }
 
+.login-form__input-error {
+  color: red;
+  margin: 1rem;
+}
+
 .login-form__input-wrapper {
   margin-bottom: 1rem;
 }
