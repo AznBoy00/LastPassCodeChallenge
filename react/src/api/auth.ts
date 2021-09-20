@@ -20,10 +20,16 @@ const authenticateUser = async (username: string, password: string): Promise<Res
 
   // POST REQUEST
   const response = await fetch(url, settings);
-
+  
   // DATA RESPONSE
   const data = (await response.json());
-  console.log('data', data);
+
+  if (response.status === 200) {
+    data.success = true;
+  } else {
+    data.success = false;
+  }
+  
   return data;
 };
 

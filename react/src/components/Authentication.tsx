@@ -1,11 +1,11 @@
 import { connect } from 'react-redux';
+import { authenticate } from '../contexts/app';
+import React from 'react';
 import { RootState } from '../reducers/rootReducer';
-import { authenticate } from '../contexts/authentication';
-import logo from '../logo.svg';
-import { useEffect } from 'react';
 
-interface Props {
-  username: string;
+interface StateProps {
+  username: any;
+  password: any;
   authToken: string;
   privateInfo: string;
 }
@@ -14,42 +14,43 @@ interface DispatchProps {
   authenticate: (username: string, password: string) => void;
 }
 
-const Authentication = (props: Props & DispatchProps): JSX.Element => {
-  useEffect(() => {
-    // authenticate('aaa', 'aaa');
-    console.log('asd', props);
-  }, [])
+const Authentication = (props: StateProps & DispatchProps): JSX.Element => {
+  // state
+  const [state, setState] = React.useState(props);
+  let { username = '', password = '' } = state;
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    setState({ ...state, username: e.target.value });
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    setState({ ...state, password: e.target.value });
+  };
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    console.log(`something`)
-    props.authenticate('aaa', 'aaa');
+    props.authenticate(username, password);
   }
 
  return (
-  <div className="App">
-    <header className="App-header">
-      <img src={logo} className="App-logo" alt="logo" />
-    </header>
-
-     <form className="login-form" onSubmit={(e) => { handleSubmit(e); }}>
-      <div className="login-form__input-wrapper">
-        <label className="login-form__input-label" htmlFor="username">Username</label>
-        <input type="text" id="username" name="username" />
-      </div>
-      <div className="login-form__input-wrapper">
-        <label className="login-form__input-label" htmlFor="password">Password</label>
-        <input type="password" id="password" name="password" />
-      </div>
-      <div className="login-form__input-wrapper">
-        <button type="submit">Login</button>
-      </div>
-    </form>
-  </div>
+  <form className="login-form" onSubmit={(e) => { handleSubmit(e); }}>
+    <div className="login-form__input-wrapper">
+      <label className="login-form__input-label" htmlFor="username">Username</label>
+        <input type="text" id="username" name="username" value={state.username} onChange={handleUsernameChange} autoComplete="username" />
+    </div>
+    <div className="login-form__input-wrapper">
+      <label className="login-form__input-label" htmlFor="password">Password</label>
+      <input type="password" id="password" name="password" value={state.password} onChange={handlePasswordChange} autoComplete="new-password" />
+    </div>
+    <div className="login-form__input-wrapper">
+      <button type="submit">Login</button>
+    </div>
+  </form>
 )};
 
-const mapStateToProps = (state: RootState): Props => ({
-  username: state.auth.username,
+const mapStateToProps = (state: RootState): StateProps => ({
+  username: '',
+  password: '',
   authToken: state.auth.authToken,
   privateInfo: state.auth.privateInfo,
 });

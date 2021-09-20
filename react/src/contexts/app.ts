@@ -17,8 +17,8 @@ const initState: STATE = {
 // actions
 export const AUTHENTICATE = 'AUTHENTICATE';
 export const AUTHENTICATE_SUCCESS = 'AUTHENTICATE_SUCCESS';
-export const AUTHENTICATE_TEST = 'AUTHENTICATE_TEST';
 export const AUTHENTICATE_FAIL = 'AUTHENTICATE_FAIL';
+export const SAVE_PRIVATE_INFORMATION = 'SAVE_PRIVATE_INFORMATION';
 export const LOGOUT = 'LOGOUT';
 
 export interface AuthAction {
@@ -34,15 +34,31 @@ export const authenticate = (username: string, password: string): AuthAction => 
   password,
 });
 
+export interface SavePrivateInfoAction {
+  type: string;
+  authToken: string;
+  privateInfo: string;
+}
+
+export const savePrivateInfo = (authToken: string, privateInfo: string): SavePrivateInfoAction => ({
+  type: SAVE_PRIVATE_INFORMATION,
+  authToken,
+  privateInfo,
+});
+
 interface AuthSuccessAction {
   type: string;
-  data: authResponse;
+  data: any;
+  username: string;
+  authToken: string;
 }
 
 // authentication success case
-export const authSuccess = (data: authResponse): AuthSuccessAction => ({
+export const authSuccess = (data: any, username: string, authToken: string): AuthSuccessAction => ({
   type: AUTHENTICATE_SUCCESS,
   data,
+  username,
+  authToken,
 });
 
 interface AuthFailAction {
@@ -58,10 +74,6 @@ export interface LogoutAction {
   type: string;
 }
 
-export interface GetUserDataAction {
-  type: string;
-}
-
 // selector
 
 // logout
@@ -73,8 +85,12 @@ export const logout = (): LogoutAction => ({
 export function* handleAuthentication({ username, password }: AuthAction): Iterator<any> {
   try {
     const data = yield call(authenticateUser, username, password);
+    var pbkdf2 = require('pbkdf2');
+    const authToken = pbkdf2.pbkdf2Sync(password, 'salt', 1, 32, 'sha512');
     if (data !== undefined) {
-      yield put(authSuccess(data));
+      yield put(authSuccess(data, username, authToken));
+    } else {
+      yield put(authFail());
     }
   } catch (e) {
     yield put(authFail());
@@ -91,11 +107,19 @@ export function* saga(): Iterator<any> {
 export default function reducer(state: STATE = initState, action: any): STATE {
   switch (action.type) {
     case AUTHENTICATE_SUCCESS: {
-      const { data } = action;
+      const { data, username, authToken } = action;
+      if (data.success === true) {
+        return {
+          ...state,
+          username: username,
+          authToken: authToken,
+        };
+      }
       return {
         ...state,
-        username: data.username,
-        authToken: data.auth_token,
+        username: initState.username,
+        authToken: initState.authToken,
+        privateInfo: initState.privateInfo,
       };
     }
     case AUTHENTICATE_FAIL: {
@@ -106,13 +130,20 @@ export default function reducer(state: STATE = initState, action: any): STATE {
         privateInfo: initState.privateInfo,
       };
     }
+    case SAVE_PRIVATE_INFORMATION: {
+      const { authToken, privateInfo } = action;
+      return {
+        ...state,
+        authToken: authToken,
+        privateInfo: privateInfo,
+      }
+    }
     case LOGOUT: {
       return {
         ...initState,
       };
     }
     default:
-      console.log(`state`, state)
       return {...state};
   }
 }

@@ -1,5 +1,7 @@
 var express = require('express');
 var cors = require('cors');
+var pbkdf2 = require('pbkdf2');
+
 var app = express();
 var port = process.env.PORT || 3001;
 
@@ -13,10 +15,12 @@ var corsOptions = {
 
 app.post('/auth', cors(corsOptions), (req, res) => {
   console.log(`req.body`, req.body);
-  res.send({
-    username: req.body.username,
-    auth_token: req.body.password,
-  });
+  // var derivedPasswordKey = pbkdf2.pbkdf2Sync(req.body.password, 'salt', 1, 32, 'sha512');
+  if (req.body.username === 'admin' && req.body.password === 'admin') {
+    res.send({});
+  } else {
+    res.status(401).send({});
+  }
   res.end();
 });
 

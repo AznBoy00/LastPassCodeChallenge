@@ -32,9 +32,15 @@
   margin-bottom: 1rem;
 }
 
-.login-form__input-label {
+.login-form__input-label,
+.private-info__label {
   color: white;
   margin-right: 1rem;
+}
+
+.private-info__textarea {
+  height: 5rem;
+  margin: 1rem;
 }
 
 @keyframes App-logo-spin {

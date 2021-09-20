@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import authentication, { STATE as authState } from '../contexts/authentication';
+import authentication, { STATE as authState } from '../contexts/app';
 
 // RootReducer (Alphabetical Order)
 export interface RootState {
